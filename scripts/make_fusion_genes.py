@@ -32,26 +32,31 @@ def make_fusion_gene(gene, fw, refflat):
                 if cur_gene != gene[0]:
                     continue
                 transcripts[transcript] = (chrom, strand, start, end, exonstart, exonend)
+        if transcripts == {}:
+            raise ValueError('This gene symbol cannot be found in refFlat.txt:' + gene[0])
         transcript = get_longest_transcript(transcripts.keys(), refflat)
         chrom, strand, start, end, exonstart, exonend  = transcripts[transcript]
 
     # use user-specified transcript
     elif len(gene) == 2:
+        found = 0
         with open(refflat, "r") as fh:
             for line in fh:
-                _, transcript, chrom, strand, start, end, _, _, _, exonstart, exonend = line.rstrip("\n").split("\t")
-                if transcript != gene[1]:
-                    continue
-                break
+                cur_gene, transcript, chrom, strand, start, end, _, _, _, exonstart, exonend = line.rstrip("\n").split("\t")
+                if cur_gene == gene[0] and transcript == gene[1]:
+                    found = 1
+                    break
+            if found == 0:
+                 raise ValueError('Wrong gene symbol or transcript provided:' + gene[0] + ', ' + gene[1])
 
     # write to a file
-    header = f'>{gene[0]}_{transcript},{chrom}:{start}-{end}' + '\n'
+    header = '>' + str(gene[0]) + '_' + str(transcript) + ',' + str(chrom) + ':' + str(start) + '-' +  str(end) + '\n'
     fw.write(header)
     exons = list(zip(exonstart.split(","), exonend.split(",")))[:-1]
     if strand == '-':
         exons = exons[::-1]
     for index, each_exon in enumerate(exons, start=1):
-        fw.write(f'{index},{each_exon[0]},{each_exon[1]}' + '\n')
+        fw.write(str(index) + ',' + str(each_exon[0]) + ',' + str(each_exon[1]) + '\n')
     fw.write("\n")
 
 def get_longest_transcript(transcripts, refflat):
