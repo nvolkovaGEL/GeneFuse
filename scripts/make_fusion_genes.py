@@ -31,27 +31,28 @@ def make_fusion_gene(gene, fw, refflat):
                 cur_gene, transcript, chrom, strand, start, end, _, _, _, exonstart, exonend = line.rstrip("\n").split("\t")
                 if cur_gene != gene[0]:
                     continue
-                transcripts[transcript] = (chrom, start, end, exonstart, exonend)
+                transcripts[transcript] = (chrom, strand, start, end, exonstart, exonend)
         transcript = get_longest_transcript(transcripts.keys(), refflat)
-        chrom, start, end, exonstart, exonend  = transcripts[transcript]
+        chrom, strand, start, end, exonstart, exonend  = transcripts[transcript]
 
     # use user-specified transcript
     elif len(gene) == 2:
         with open(refflat, "r") as fh:
             for line in fh:
-                _, transcript, chrom, _, start, end, _, _, _, exonstart, exonend = line.rstrip("\n").split("\t")
+                _, transcript, chrom, strand, start, end, _, _, _, exonstart, exonend = line.rstrip("\n").split("\t")
                 if transcript != gene[1]:
                     continue
                 break
-    
+
     # write to a file
-    header = f">{gene[0]}_{transcript},{chrom}:{start}-{end}\n"
+    header = f'>{gene[0]}_{transcript},{chrom}:{start}-{end}' + '\n'
     fw.write(header)
     exons = list(zip(exonstart.split(","), exonend.split(",")))[:-1]
+    if strand == '-':
+        exons = exons[::-1]
     for index, each_exon in enumerate(exons, start=1):
-        fw.write(f'{index},{each_exon[0]},{each_exon[1]}\n')
+        fw.write(f'{index},{each_exon[0]},{each_exon[1]}' + '\n')
     fw.write("\n")
-
 
 def get_longest_transcript(transcripts, refflat):
     longest_length = 0
